@@ -2,17 +2,18 @@ FROM golang:1.24 AS builder
 
 WORKDIR /app
 
+COPY go.mod go.sum ./
+RUN go mod download && go mod verify
+
 COPY . .
 
-RUN go mod tidy
-RUN go build -o parcel-tracker
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o parcel-tracker
 
 FROM alpine:latest
 
-RUN apk add --no-cache sqlite-libs
+RUN apk add --no-cache sqlite
 
 WORKDIR /app
-
 COPY --from=builder /app/parcel-tracker .
 COPY tracker.db .
 
